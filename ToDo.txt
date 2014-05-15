@@ -1,0 +1,4 @@
+add daily data to daily data frame
+use daily to plot a histogram of total steps taken each day
+calculate mean and mediam ignoring missing data
+
