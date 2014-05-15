@@ -20,12 +20,27 @@ str(activity) #show structure of data frame
 ##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
 ```
 
+```r
+summary(activity)
+```
+
+```
+##      steps            date               interval   
+##  Min.   :  0.0   Min.   :2012-10-01   Min.   :   0  
+##  1st Qu.:  0.0   1st Qu.:2012-10-16   1st Qu.: 589  
+##  Median :  0.0   Median :2012-10-31   Median :1178  
+##  Mean   : 37.4   Mean   :2012-10-31   Mean   :1178  
+##  3rd Qu.: 12.0   3rd Qu.:2012-11-15   3rd Qu.:1766  
+##  Max.   :806.0   Max.   :2012-11-30   Max.   :2355  
+##  NA's   :2304
+```
+
 ## What is mean total number of steps taken per day?
 
 ```r
 range <- as.numeric(max(activity$date)-min(activity$date))
-daily <- data.frame(Date = as.Date(character()),
-                   Steps = numeric(),
+daily <- data.frame(date = as.Date(character()),
+                   steps = numeric(),
                    invalids = numeric(),
                    stringsAsFactors = FALSE)
 base.date <- min(activity$date)
@@ -35,22 +50,22 @@ for(index in 0:range){
      steps <- sum(work$steps,
                   na.rm = TRUE)
      invalids <- sum(is.na(work$steps))
-     temp <- data.frame(Date = filter.date,
-                       Steps = steps,
+     temp <- data.frame(date = filter.date,
+                       steps = steps,
                        invalids = invalids,
                        stringsAsFactors = FALSE)
      daily <- rbind(daily,temp)
 }
-hist(daily$Steps,
+hist(daily$steps,
      breaks = 12,
      main="Histogram of number of steps taken daily",
      xlab="Steps")
 ```
 
-![plot of chunk compute unadjusted steps](figure/compute_unadjusted_steps.png) 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
 
 ```r
-mean(daily$Steps)
+mean(daily$steps)
 ```
 
 ```
@@ -58,14 +73,15 @@ mean(daily$Steps)
 ```
 
 ```r
-median(daily$Steps)
+median(daily$steps)
 ```
 
 ```
 ## [1] 10395
 ```
 
-As seen above the mean is 9354.2295 and the median is 10395.
+As seen above the mean is **9354.2295** steps and the median is 
+**10395** steps.
 ## What is the average daily activity pattern?
 
 ```r
@@ -105,7 +121,7 @@ plot(x = interval$interval,
      ylab = "steps")
 ```
 
-![plot of chunk daily pattern](figure/daily_pattern.png) 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
 
 ```r
 
@@ -117,9 +133,87 @@ interval$interval[which.max(interval$mean.steps)]
 ```
 
 The 5-minute interval with the highest average number of steps is
-835.
+**835**.
 ## Imputing missing values
 
+```r
+
+good <- subset(activity,
+               subset = !is.na(steps))
+bad <- subset(activity,
+              subset = is.na(steps))
+
+#number of NA observatins
+nrow(bad)
+```
+
+```
+## [1] 2304
+```
+
+```r
+
+range = nrow(bad)
+for (index in 1:range){
+     filter <- bad$interval[index]
+     bad$steps[index] <- subset(interval, interval == filter)$med.steps
+}
+
+activity_imput <- rbind(good,bad)
+
+range <- as.numeric(max(activity_imput$date)-min(activity_imput$date))
+
+daily_imput <- data.frame(date = as.Date(character()),
+                          steps = numeric(),
+                          invalids = numeric(),
+                          stringsAsFactors = FALSE)
+
+base.date <- min(activity_imput$date)
+
+for(index in 0:range){
+     filter.date <- base.date + index
+     work <- subset(activity_imput, date == filter.date)
+     steps <- sum(work$steps,
+                  na.rm = TRUE)
+     invalids <- sum(is.na(work$steps))
+     temp <- data.frame(date = filter.date,
+                        steps = steps,
+                        invalids = invalids,
+                        stringsAsFactors = FALSE)
+     daily_imput <- rbind(daily_imput,temp)
+}
 
 
+hist(daily_imput$steps,
+     breaks = 12,
+     main="Histogram of number of steps taken daily/
+     with missing data points changed to the mean",
+     xlab="Steps")
+```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+
+```r
+mean(daily_imput$steps)
+```
+
+```
+## [1] 9504
+```
+
+```r
+median(daily_imput$steps)
+```
+
+```
+## [1] 10395
+```
+
+The mean total steps per day using the adjusted data is **9503.8689**
+a difference of **149.6393** steps from the 
+unadjusted mean of **9354.2295** steps.
+
+The median total steps per day using the adjusted data is **10395**
+a difference of **0** steps from the
+unadjusted median of **10395** steps.
 ## Are there differences in activity patterns between weekdays and weekends?

@@ -3,19 +3,20 @@ Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
-```{r input data and cleaning, tidy=FALSE}
+```{r , tidy=FALSE}
 library(lubridate)
 activity <- read.csv("activity.csv",
                  stringsAsFactors = FALSE) # insure data is not converect to a factor
 activity$date <- as.Date(activity$date)
 
 str(activity) #show structure of data frame
+summary(activity)
 ```
 ## What is mean total number of steps taken per day?
-```{r compute unadjusted steps, tidy=FALSE, fig.width=8,fig.height=8}
+```{r , tidy=FALSE, fig.width=8,fig.height=8}
 range <- as.numeric(max(activity$date)-min(activity$date))
-daily <- data.frame(Date = as.Date(character()),
-                   Steps = numeric(),
+daily <- data.frame(date = as.Date(character()),
+                   steps = numeric(),
                    invalids = numeric(),
                    stringsAsFactors = FALSE)
 base.date <- min(activity$date)
@@ -25,22 +26,23 @@ for(index in 0:range){
      steps <- sum(work$steps,
                   na.rm = TRUE)
      invalids <- sum(is.na(work$steps))
-     temp <- data.frame(Date = filter.date,
-                       Steps = steps,
+     temp <- data.frame(date = filter.date,
+                       steps = steps,
                        invalids = invalids,
                        stringsAsFactors = FALSE)
      daily <- rbind(daily,temp)
 }
-hist(daily$Steps,
+hist(daily$steps,
      breaks = 12,
      main="Histogram of number of steps taken daily",
      xlab="Steps")
-mean(daily$Steps)
-median(daily$Steps)
+mean(daily$steps)
+median(daily$steps)
 ```
-As seen above the mean is `r mean(daily$Steps)` and the median is `r median(daily$Steps)`.
+As seen above the mean is **`r mean(daily$steps)`** steps and the median is 
+**`r median(daily$steps)`** steps.
 ## What is the average daily activity pattern?
-```{r daily pattern,tidy=FALSE,fig.width=10,fig.height=5}
+```{r,tidy=FALSE,fig.width=10,fig.height=5}
 
 range <- unique(activity$interval)
 interval <- data.frame(interval = numeric(),
@@ -79,9 +81,63 @@ plot(x = interval$interval,
 interval$interval[which.max(interval$mean.steps)]
 ```
 The 5-minute interval with the highest average number of steps is
-`r interval$interval[which.max(interval$mean.steps)]`.
+**`r interval$interval[which.max(interval$mean.steps)]`**.
 ## Imputing missing values
+```{r, tidy=FALSE}
+
+good <- subset(activity,
+               subset = !is.na(steps))
+bad <- subset(activity,
+              subset = is.na(steps))
+
+#number of NA observatins
+nrow(bad)
+
+range = nrow(bad)
+for (index in 1:range){
+     filter <- bad$interval[index]
+     bad$steps[index] <- subset(interval, interval == filter)$med.steps
+}
+
+activity_imput <- rbind(good,bad)
+
+range <- as.numeric(max(activity_imput$date)-min(activity_imput$date))
+
+daily_imput <- data.frame(date = as.Date(character()),
+                          steps = numeric(),
+                          invalids = numeric(),
+                          stringsAsFactors = FALSE)
+
+base.date <- min(activity_imput$date)
+
+for(index in 0:range){
+     filter.date <- base.date + index
+     work <- subset(activity_imput, date == filter.date)
+     steps <- sum(work$steps,
+                  na.rm = TRUE)
+     invalids <- sum(is.na(work$steps))
+     temp <- data.frame(date = filter.date,
+                        steps = steps,
+                        invalids = invalids,
+                        stringsAsFactors = FALSE)
+     daily_imput <- rbind(daily_imput,temp)
+}
 
 
+hist(daily_imput$steps,
+     breaks = 12,
+     main="Histogram of number of steps taken daily/
+     with missing data points changed to the mean",
+     xlab="Steps")
+mean(daily_imput$steps)
+median(daily_imput$steps)
 
+```
+The mean total steps per day using the adjusted data is **`r mean(daily_imput$steps)`**
+a difference of **`r mean(daily_imput$steps)-mean(daily$steps)`** steps from the 
+unadjusted mean of **`r mean(daily$steps)`** steps.
+
+The median total steps per day using the adjusted data is **`r median(daily_imput$steps)`**
+a difference of **`r median(daily_imput$steps)-median(daily$steps)`** steps from the
+unadjusted median of **`r median(daily$steps)`** steps.
 ## Are there differences in activity patterns between weekdays and weekends?
