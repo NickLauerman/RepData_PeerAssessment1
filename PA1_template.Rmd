@@ -1,14 +1,34 @@
-# Reproducible Research: Peer Assessment 1
+Reproducible Research: Peer Assessment 1
+=========================================
 
 
 ## Loading and preprocessing the data
-
-
-
+```{r input data and cleaning, tidy=FALSE}
+library(lubridate)
+activity <- read.csv("activity.csv",
+                 stringsAsFactors = FALSE) # insure data is not converect to a factor
+activity$date <- as.Date(activity$date)
+activity$interval <- as.factor(activity$interval)
+str(activity) #show structure of data frame
+```
 ## What is mean total number of steps taken per day?
-
-
-
+```{r compute unadjusted steps, tidy=FALSE}
+range <- as.numeric(max(activity$date)-min(activity$date))
+daily <- dataframe(Date = as.Date(character()),
+                   Steps = numeric(),
+                   invalids = numeric(),
+                   stringsAsFactors = FALSE)
+base.date <- min(activity$date)
+for(index in 0:range){
+     filter.date <- base.date + index
+     work <- subset(activity, date == filter.date)
+     steps <- sum(work$steps,
+                  na.rm = TRUE)
+     invalids <- sum(is.na(work$steps))
+     
+     
+}
+```
 ## What is the average daily activity pattern?
 
 
