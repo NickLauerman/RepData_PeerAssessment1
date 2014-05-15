@@ -8,13 +8,13 @@ library(lubridate)
 activity <- read.csv("activity.csv",
                  stringsAsFactors = FALSE) # insure data is not converect to a factor
 activity$date <- as.Date(activity$date)
-activity$interval <- as.factor(activity$interval)
+
 str(activity) #show structure of data frame
 ```
 ## What is mean total number of steps taken per day?
-```{r compute unadjusted steps, tidy=FALSE}
+```{r compute unadjusted steps, tidy=FALSE, fig.width=8,fig.height=8}
 range <- as.numeric(max(activity$date)-min(activity$date))
-daily <- dataframe(Date = as.Date(character()),
+daily <- data.frame(Date = as.Date(character()),
                    Steps = numeric(),
                    invalids = numeric(),
                    stringsAsFactors = FALSE)
@@ -25,14 +25,61 @@ for(index in 0:range){
      steps <- sum(work$steps,
                   na.rm = TRUE)
      invalids <- sum(is.na(work$steps))
-     
-     
+     temp <- data.frame(Date = filter.date,
+                       Steps = steps,
+                       invalids = invalids,
+                       stringsAsFactors = FALSE)
+     daily <- rbind(daily,temp)
 }
+hist(daily$Steps,
+     breaks = 12,
+     main="Histogram of number of steps taken daily",
+     xlab="Steps")
+mean(daily$Steps)
+median(daily$Steps)
 ```
+As seen above the mean is `r mean(daily$Steps)` and the median is `r median(daily$Steps)`.
 ## What is the average daily activity pattern?
+```{r daily pattern,tidy=FALSE,fig.width=10,fig.height=5}
 
+range <- unique(activity$interval)
+interval <- data.frame(interval = numeric(),
+                       mean.steps = numeric(),
+                       med.steps = numeric(),
+                       std.steps = numeric(),
+                       invalids = numeric())
 
+for(index in seq_along(range)){
+     filter <- range[index]
+     work <- subset(activity, 
+                    interval==filter,
+                    select = steps)
+     mean.steps <- mean(work$steps,
+                        na.rm = TRUE)
+     med.steps <- median(work$steps,
+                         na.rm = TRUE)
+     std.steps <- sd(work$steps,
+                     na.rm = TRUE)
+     invalids <- sum(is.na(work$steps))
+     temp <- data.frame(interval = filter,
+                        mean.steps = mean.steps,
+                        med.steps = med.steps,
+                        std.steps = std.steps,
+                        invalids = invalids)
+     interval <- rbind(interval,temp)
+}
 
+plot(x = interval$interval,
+     y = interval$mean.steps,
+     type = "l",
+     main = "Mean number of steps per 5 minute time interval",
+     xlab = "interval (5 minutes)",
+     ylab = "steps")
+
+interval$interval[which.max(interval$mean.steps)]
+```
+The 5-minute interval with the highest average number of steps is
+`r interval$interval[which.max(interval$mean.steps)]`.
 ## Imputing missing values
 
 
