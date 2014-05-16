@@ -3,24 +3,37 @@ Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
-The file activity.csv r=is read in from the same working directory the data from
-the file is inputed into the activity data frame.
+The file activity.csv is read in from the working directory. 
 
-The date varable inside the activity frame is then converted to a date type variable.
+The data from the file is placed into the activity data frame.
+
+The _date_ varable inside the activity data frame is then converted to a date 
+type variable.
 
 ```{r , tidy=FALSE}
 # read the csv file in and assign to the activity data frome
 activity <- read.csv("activity.csv",
                  stringsAsFactors = FALSE) # insure data is not converect to a factor
+# convert the date field to a date data type
 activity$date <- as.Date(activity$date)
+str(activity)
+summary(activity)
 ```
 ## What is mean total number of steps taken per day?
-```{r , tidy=FALSE, fig.width=8,fig.height=8}
+The activity data is now parsed and accumulated providing the total number of steps for each day,
+this is stored in the daily data frame along with the number of missing observations
+for each day.
+```{r , tidy=FALSE}
+#determin the number of days in the data set
 range <- as.numeric(max(activity$date)-min(activity$date))
+
+# set up a NULL data frame to hold the daily totals
 daily <- data.frame(date = as.Date(character()),
                    steps = numeric(),
                    invalids = numeric(),
                    stringsAsFactors = FALSE)
+# compute the total steps for a day and the number of NA values in that day
+# add that to the daily data frame for each day
 base.date <- min(activity$date)
 for(index in 0:range){
      filter.date <- base.date + index
@@ -34,25 +47,39 @@ for(index in 0:range){
                        stringsAsFactors = FALSE)
      daily <- rbind(daily,temp)
 }
+```
+Using the daily data agravated above a histogram of the number of steps taken on
+a daily passes is now prepared. Also the mean and median number of steps is computed.
+```{r,tidy=FALSE, fig.width=8, fig.height=8}
 hist(daily$steps,
      breaks = 12,
      main="Histogram of number of steps taken daily",
      xlab="Steps")
+# compute mean and median daily steps
 mean(daily$steps)
 median(daily$steps)
 ```
 As seen above the mean is **`r mean(daily$steps)`** steps and the median is 
 **`r median(daily$steps)`** steps.
 ## What is the average daily activity pattern?
+The activity data is now agravated by the spcified interval, or 5 minute period
+in the day. FOr each interval the average (mean) number of steps is computed
+along with the median, standard deviation and the number of missing values for each
+interval are computed and stored inthe interval data frame.
 ```{r,tidy=FALSE,fig.width=10,fig.height=5}
-
+# get a list of valid intervals
 range <- unique(activity$interval)
+
+#set up NULL interval data frame
 interval <- data.frame(interval = numeric(),
                        mean.steps = numeric(),
                        med.steps = numeric(),
                        std.steps = numeric(),
                        invalids = numeric())
 
+# compute average steps per interval and stor in interval data frame
+# additionally the median and standard deviation is computed for each interval
+# as well as the number of NA for each interval.
 for(index in seq_along(range)){
      filter <- range[index]
      work <- subset(activity, 
@@ -72,44 +99,76 @@ for(index in seq_along(range)){
                         invalids = invalids)
      interval <- rbind(interval,temp)
 }
-
+```
+Using the data agervated above a plot is now prepared to show the number of steps
+ddistrubation accross the five minute intervals for a day. As can be expected
+ther are periods of very little activity and smaller periods of very high levels
+of activity.
+```{r,tidy=FALSE,fig.width=10,fig.height=5}
 plot(x = interval$interval,
      y = interval$mean.steps,
      type = "l",
      main = "Mean number of steps per 5 minute time interval",
      xlab = "interval (5 minutes)",
      ylab = "steps")
-
+```
+The 5-minute interval with the highest activity is identify.
+```{r}
 interval$interval[which.max(interval$mean.steps)]
 ```
 The 5-minute interval with the highest average number of steps is
 **`r interval$interval[which.max(interval$mean.steps)]`**.
 ## Imputing missing values
+The data is now divided into two data frame with the observations that are missing
+a step count being placed into one and ovbservations with a step count being placed into 
+another data frame. A review of the data showed that only the steps varable had missing data.
+
 ```{r, tidy=FALSE}
 
 good <- subset(activity,
                subset = !is.na(steps))
 bad <- subset(activity,
               subset = is.na(steps))
-
+```
+The number of observation that were missing the number of steps are counted.
+```{r, tidy=FALSE}
 #number of NA observatins
 nrow(bad)
+```
+There were `r nrow(bad)` observations without the number of steps.
 
+The missing observations will be replace with the mean number of steps for that 
+interval. The mean number of steps will be obtained from the calculations above
+that was stored inthe interval data frame. The two data frames are then recombined 
+into a single data frame.
+```{r, tidy=FALSE}
+# the number of observations needing correction is assigned
 range = nrow(bad)
+# replace the NA values with the mean value for that interval.
 for (index in 1:range){
      filter <- bad$interval[index]
-     bad$steps[index] <- subset(interval, interval == filter)$med.steps
+     bad$steps[index] <- subset(interval, interval == filter)$mean.steps
 }
 
+#combine the two data frames
 activity_imput <- rbind(good,bad)
+```
+The number of steps taken in a day is now recomputed and stored in a new data
+frame. This new data frame is then used to replot the histograme of daily steps.
+Finally a new mean and median are computed for the imputed data and compaired to
+the data with the missing data was ignored.
 
+```{r, tidy=FALSE, fig.width=10, fig.height=5}
+# set number of days in the data set
 range <- as.numeric(max(activity_imput$date)-min(activity_imput$date))
 
+# set up NULL data frame for results
 daily_imput <- data.frame(date = as.Date(character()),
                           steps = numeric(),
                           invalids = numeric(),
                           stringsAsFactors = FALSE)
 
+# collect and total number of steps per day
 base.date <- min(activity_imput$date)
 
 for(index in 0:range){
@@ -125,12 +184,14 @@ for(index in 0:range){
      daily_imput <- rbind(daily_imput,temp)
 }
 
-
+# plot histogram
 hist(daily_imput$steps,
      breaks = 12,
      main="Histogram of number of steps taken daily
      with missing data points changed to the mean",
      xlab="Steps")
+
+# compute new mean and median
 mean(daily_imput$steps)
 median(daily_imput$steps)
 
@@ -143,6 +204,9 @@ The median total steps per day using the adjusted data is **`r median(daily_impu
 a difference of **`r median(daily_imput$steps)-median(daily$steps)`** steps from the
 unadjusted median of **`r median(daily$steps)`** steps.
 ## Are there differences in activity patterns between weekdays and weekends?
+THe imputted data (data were the missing observations has been replaced), is now used
+to see if there are varing activaty patterns between weekdays and weekends.
+The data is frist classiffied as to weather a date is a weekday or weekend
 ```{r,tidy=FALSE,fig.width=8}
 range = nrow(activity_imput)
 work <- data.frame(weekend = factor(levels=c("weekday","weekend")),
@@ -160,7 +224,10 @@ for(index in 1:range){
      work <- rbind(work,temp)     
 }
 activity_imput  <- cbind(activity_imput,work)
-
+```
+Once the day is classified the data frame is devided into two (weekday and weekend),
+and new average steps per interval are computed for each data frame. 
+```{r,tidy=FALSE,fig.width=8}
 # plot weekdays
 range <- unique(activity_imput$interval)
 temp_weekday <- subset(activity_imput,
@@ -204,10 +271,12 @@ for(index in seq_along(range)){
                         weekend = as.factor(work$weekend))
      interval_weekend <- rbind(interval_weekend, temp)
 }
+```
+The average activity per interval is now plotted for each data frame, showing
+differing activity patterns for weekday and weekend activity throughout
+the day
 
-
-
-
+```{r,tidy=FALSE,fig.width=8}
 par(mfrow=(c(2,1)))
 
 plot(x = interval_weekday$interval,
@@ -227,6 +296,6 @@ plot(x = interval_weekend$interval,
      Weekends",
      xlab = "interval (5 minutes)",
      ylab = "steps")
-     
+par(mfrow=(c(1,1)))     
 ```
 
