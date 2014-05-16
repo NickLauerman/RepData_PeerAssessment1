@@ -186,7 +186,7 @@ for(index in 0:range){
 
 hist(daily_imput$steps,
      breaks = 12,
-     main="Histogram of number of steps taken daily/
+     main="Histogram of number of steps taken daily
      with missing data points changed to the mean",
      xlab="Steps")
 ```
@@ -217,3 +217,97 @@ The median total steps per day using the adjusted data is **10395**
 a difference of **0** steps from the
 unadjusted median of **10395** steps.
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```r
+range = nrow(activity_imput)
+work <- data.frame(weekend = factor(levels=c("weekday","weekend")),
+                   stringsAsFactors = FALSE)
+
+for(index in 1:range){
+     hold <- weekdays(activity_imput$date[index])
+     if (hold == "Saturday" | hold =="Sunday"){
+          weekend = "weekend"
+     } else {
+          weekend = "weekday"
+     }
+     temp <- data.frame(weekend = as.factor(weekend),
+                        stringsAsFactors = FALSE)
+     work <- rbind(work,temp)     
+}
+activity_imput  <- cbind(activity_imput,work)
+
+# plot weekdays
+range <- unique(activity_imput$interval)
+temp_weekday <- subset(activity_imput,
+                       weekend == "weekday")
+interval_weekday <- data.frame(interval = numeric(),
+                               mean.steps = numeric(),
+                               weekend = factor(levels=c("weekday","weekend")),
+                               stringsAsFactors = FALSE)
+temp_weekend <- subset(activity_imput,
+                       weekend == "weekend")
+interval_weekend <- data.frame(interval = numeric(),
+                               mean.steps = numeric(),
+                               weekend = factor(levels=c("weekday","weekend")),
+                               stringsAsFactors = FALSE)
+
+
+for(index in seq_along(range)){
+     filter <- range[index]
+     work <- subset(temp_weekday, 
+                    interval==filter)
+     
+     mean.steps <- mean(work$steps,
+                        na.rm = TRUE)
+
+     temp <- data.frame(interval = filter,
+                        mean.steps = mean.steps,
+                        weekend = as.factor(work$weekend))
+     interval_weekday <- rbind(interval_weekday, temp)
+}
+
+for(index in seq_along(range)){
+     filter <- range[index]
+     work <- subset(temp_weekend, 
+                    interval==filter)
+     
+     mean.steps <- mean(work$steps,
+                        na.rm = TRUE)
+
+     temp <- data.frame(interval = filter,
+                        mean.steps = mean.steps,
+                        weekend = as.factor(work$weekend))
+     interval_weekend <- rbind(interval_weekend, temp)
+}
+
+
+
+
+par(mfrow=(c(2,1)))
+
+plot(x = interval_weekday$interval,
+     y = interval_weekday$mean.steps,
+     type = "l",
+     main = "Mean number of steps per 5 minute time interval
+     adjusted values
+     Weekdays",
+     xlab = "interval (5 minutes)",
+     ylab = "steps")
+              
+plot(x = interval_weekend$interval,
+     y = interval_weekend$mean.steps,
+     type = "l",
+     main = "Mean number of steps per 5 minute time interval
+     adjusted values
+     Weekends",
+     xlab = "interval (5 minutes)",
+     ylab = "steps")
+```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+
+```r
+     
+```
+
+
